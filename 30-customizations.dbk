@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY % commondata SYSTEM "common.ent" > %commondata;
+]>
+<chapter>
+  <title>Installation</title>
+  <para>
+    This chapter contains information related to the installation of the
+    software on the &kuro;.
+  </para>
+</chapter>

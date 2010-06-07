@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY % commondata SYSTEM "common.ent" > %commondata;
+]>
+<chapter id="misc">
+  <title>Miscellaneous Topics</title>
+
+  <para>
+    This chapter contains information related to creating, and
+    maintaining powerpc systems.
+  </para>
+
+  <section id="oldworld">
+    <title>OldWorld Recipes</title>
+    <para>
+      This section describes how a user might choose to use different
+      boot methods for OldWorld machines.
+    </para>
+
+    <section id="miboot">
+      <title>Creating boot floppies using <command>miboot</command></title>
+      <para>
+	For OldWorld machines, special care has to be taken to generate
+	one boot device: one of the options of booting them is to use a
+	utility called <command>miboot</command>, developed by <ulink
+	url="http://penguinppc.org/historical/benh/">Benjamin
+	Herrenschmidt</ulink>.
+      </para>
+
+      <para>
+	The easiest way of generating a boot floppy that can be used with
+	such machines is to compile a proper <code>vmlinux</code> kernel
+	(with an eye on the size of the final image), to get an already
+	built boot-floppy (like the ones provided by Debian's woody
+	distribution) and put the kernel there, with the following commands:
+      </para>
+
+      <screen>
+	# apt-get install hfsutils macutils rsrce miboot
+	$ gzip -9 vmlinux
+	$ hmount /dev/fd0
+	$ hcopy vmlinux.gz :zImage
+	$ humount /dev/fd0
+      </screen>
+
+      <para>
+	Don't forget to include the modules for <literal>MACE</literal>,
+	<literal>ext2</literal> (or <literal>ext3</literal> or whatever
+	is the filesystem used for the root device of your machine), the
+	appropriate driver (most probably the <literal>MESH</literal>
+	driver) and the appropriate framebuffer driver for your board
+	(in my case, it is either a <literal>mach64</literal> or an
+	<literal>imstt</literal> driver).
+      </para>
+
+      <para>
+	Also, due to deficiencies (bugs) of the early implementations of
+	OpenFirmware on OldWorld Macs, the default input and output
+	devices are set to a serial console. This is quite inconvenient
+	for most users that want to use OpenFirmware boot monitor. For
+	that purpose, it is a good thing to set some non-volatile RAM
+	variables with suitable values using the
+	<command>nvsetenv</command> command, like this:
+      </para>
+
+      <screen>
+	nvsetenv input-device kbd
+	nvsetenv output-device screen
+      </screen>
+    </section>
+
+    <section id="quik">
+      <title>Booting from an HD using <command>quik</command></title>
+
+      <para>
+	Another (and probably the most desirable) way of booting Linux
+	in a system completely free of proprietary software is to
+	install the <command>quik</command> bootloader.
+      </para>
+
+      <para>
+	For people already used with running Linux on architectures like
+	<literal>i386</literal>, <command>quik</command> is
+	<emphasis>quite</emphasis> similar to the
+	<command>lilo</command> <emphasis>modus operandi</emphasis> it
+	reads a simple configuration file (with a syntax quite similar
+	to that of <command>lilo</command>) and lets the user choose
+	which kernel to boot. It is loaded directly from OpenFirmware
+	and no extra software is needed to carry on the boot process.
+      </para>
+
+      <para>
+	The <command>quik</command> command can be installed with a
+	simple call to <command>apt-get</command> (if it is not
+	installed already):
+      </para>
+
+      <screen>
+	apt-get install quik
+      </screen>
+
+      <para>
+	One should have some things in mind while using
+	<command>quik</command> for controlling boot-loading:
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    Even though <command>quik</command> looks a lot like
+	    <command>lilo</command>, it doesn't follow symbolic links
+	    and, therefore, its configuration file must reference real
+	    kernel images, instead of the usual practice of using
+	    symlinks like <filename>/vmlinuz</filename> and
+	    <filename>/vmlinuz.old</filename>. Despite the fact that
+	    kernels made with <command>make-kpkg</command> are
+	    automatically configured in their
+	    <filename>postinst</filename> script to "fix" the symlinks,
+	    you should not depend on them for the purposes already
+	    discussed.
+	  </para>
+	</listitem>
+
+	<listitem>
+	  <para>
+	    Similarly to <command>lilo</command>, after installing a new
+	    kernel, the <command>quik</command> command must be reissued
+	    (of course, after the new kernel is included in quik's
+	    configuration file.
+	  </para>
+	</listitem>
+      </itemizedlist>
+
+      <para>
+	For <command>quik</command>, since it runs before the Linux
+	kernel has taken control of the machine, it is quite convenient
+	to have the non-volatile RAM variables set correctly so that the
+	input and output of the OpenFirmware go to/come from the desired
+	devices.  Otherwise, you won't be able to choose your kernel
+	and, if you make a mistake while compiling a newer kernel, you
+	will be left with a kernel that panics and you won't be able to
+	boot your system, since it will always return to booting the
+	newest kernel inserted into <command>quik</command>'s
+	configuration file.
+      </para>
+
+      <para>
+	In other words: take care to see in the device tree (located
+	under the <filename>/proc</filename> directory) what devices are
+	aliased to <code>kbd</code> and <code>screen</code>.
+      </para>
+    </section>
+
+    <section id="newworld">
+      <title>NewWorld Bootable CDs</title>
+
+      <para>
+	This section briefly describes how to create a bootable CD with
+	Linux for NewWorld machines (as described by Ethan Benson on the
+	<ulink
+	url="http://lists.penguinppc.org/yaboot-users/2002/yaboot-users-200212/msg00002.html">yaboot-users</ulink>
+	mailing list:
+      </para>
+
+      <screen>
+this is pretty easy with current mkisofs (the one that ships in debian
+woody is fine).
+
+here is what you do:
+
+1: create your CD hierarchy, at say ~/cd-master
+2: create a boot directory; mkdir ~/cd-master/boot
+3: create a boot/ofboot.b; 
+   cat /usr/share/doc/yaboot/examples/simpleboot.chrp | \
+       sed -e 's/hd:2/cd:/' &gt; ~/cd-master/boot/ofboot.b
+
+   (note if you don't use debian this path will be
+    /path/to/yabootsource/doc/examples/simpleboot.chrp)
+4: copy yaboot binary; cp /usr/lib/yaboot/yaboot ~/cd-master/boot
+5: create a `maps' file for mkisofs;
+   cat &lt;&lt;EOF &gt; ~/maps
+# EXTN   XLate   CREATOR   TYPE     Comment
+.b              Raw     'UNIX'    'tbxi'   "bootstrap"
+yaboot          Raw     'UNIX'    'boot'   "bootstrap"
+linux           Raw     'UNIX'    'boot'   "kernel"
+vmlinux         Raw     'UNIX'    'boot'   "kernel"
+.conf           Raw     'UNIX'    'conf'   "bootstrap"
+root.bin        Raw     'UNIX'    'root'   "root_image"
+*               Raw     'UNIX     'UNIX'   "unix"
+EOF
+
+6: create ISO; mkisofs -hfs -part -map ~/maps -no-desktop \
+	       -hfs-volid "Yaboot_Boot_CD" -hfs-bless ~/cd-master/boot \
+	       -r -o yaboot-cd.iso ~/cd-master
+
+7: burn .iso to CD; cdrecord -blahblah -data yaboot-cd.iso
+
+note that step 3 is quite important, as is step 5.  the sed command
+just replaces the hard coded `hd:2' device with `cd:' which is
+required for CD booting.  the maps file ensures the correct HFS
+type/creators are set on the right files.  the ofboot.b is required
+since some models (notably blue g3) refuse to boot binaries by
+default, thus the ofboot.b first stage is necessary.
+
+the resulting ISO will be bootable on all NewWorld powermacs by simply
+holding down the C key during boot, you can mount it in *nix as
+regular ISO9660.
+
+note that you *must* use a subdirectory in your CD tree, not the root of
+the CD tree, mkisofs will ignore your -hfs-bless option if you attempt
+to use the root of the cd mastering tree.  check the output of mkisofs
+for a `Blessing cd-master/boot' message, this is the only indication
+of whether it worked, if it can't find the dir or some other error
+occurs it just silently ignores that option and your CD won't be
+bootable (i consider this a bug). 
+      </screen>
+    </section>
+
+    <section>
+      <title>Booting from a TFTP server</title>
+      <screen>
+	boot-device as "enet:130.60.61.34,bootme"
+      </screen>
+    </section>
+
+    <section>
+      <title>Setting the parameters to the NVRAM for oldworld computers</title>
+      <screen>
+	nvsetenv boot-device "$(ofpath &lt;root disk&gt;0)"
+	nvsetenv boot-file " Linux" (may not be needed)
+	nvsetenv boot-command "begin ['] boot catch 1000 ms cr again"
+	nvsetenv boot-file /boot/vmlinux root=/dev/hdaX video="atyfb:vmode:17:cmode:16" 
+      </screen>
+    </section>
+
+    <section>
+      <title></title>
+      <para>
+	With <command>quik</command>, use <code>ext2</code>,
+	not <code>ext3</code>.
+      </para>
+
+      <para>
+	Source: http://osxbook.com/book/bonus/ancient/whatismacosx/arch_boot.html
+      </para>
+    </section>
+
+    <para>
+ 2)	SCSI hard-drive bootup
+	If Linux is on a SCSI disk, use
+	boot-device scsi/sd@1:0 if your machine has only one SCSI bus
+	or it's on the external bus.
+	boot-device scsi-int/sd@1:0 if it's on the internal bus of
+	some machines with dual ports (7500, 7600, others?)
+	you should replace '1' with the appropriate ID of the SCSI
+	device.
+
+	<para>
+	  Source: http://www.jonh.net/lppcfom-serve/cache/221.html
+	</para>
+    </para>
+
+    <para>
+      Read about how one makes a bootable CD for Newworlds with mkisofs:
+      apparently, the needed things are the following:
+
+      * create a folder with <command>yaboot</command>, yaboot.conf,
+      vmlinux, root.bin. I'm not sure if boot-floppy-hfs.img and
+      ofboot.b are necessary. I also don't have an idea of how
+      OpenFirmware knows that it is supposed to load
+      <command>yaboot</command> during the boot;
+    </para>
+
+    <screen>
+      mkisofs -hfs -map <replaceable>file</replaceable> -part -hfs-bless <replaceable>folder</replaceable> -r -o <replaceable>isoimage.iso</replaceable> <replaceable>root-of-cd</replaceable>
+    </screen>
+
+    <screen>
+      # /target/sbin/nvsetenv boot-device ata/ata-disk@0:2
+                                                  ^^^
+            2 if the root device is /dev/hda2, 3 for hda3, etc
+
+      # /target/sbin/nvsetenv input-device kbd
+      # /target/sbin/nvsetenv output-device /bandit/ATY,264GT-B
+    </screen>
+
+    <section>
+      <para>
+	To set the l2 cache of aftermarked processors.
+      </para>
+
+      <screen>
+	0x<replaceable>VALUE</replaceable> > /proc/sys/kernel/l2cr
+	l2cr=0x<replaceable>VALUE</replaceable>
+	echo '0xa900001c' > /proc/sys/kernel/l2cr
+      </screen>
+    </section>
+
+    <screen>
+      &lt; &lt; One other thing: I can't find where to give command line options to the
+      &lt; &lt; bootfloppy. If that would work I could at least boot the rescue floppy and
+      &lt; &lt; get that to load the OS right.
+      &lt; &lt;
+      &lt; &lt; (The documentation just assumes everyone knows where to enter this command
+      &lt; &lt; line... then when the rescue flop says "Try passing init= option to the
+      &lt; &lt; kernel" I say "WHERE?")
+      &lt;
+      &lt; Well, it won't help at this point, OF is not even loading quik, much
+      &lt; less the kernel. But it is possible, by using ResEdit on the System
+      &lt; file that's in the boot floppy. Let me experiment a little tonight -
+      &lt; no one's ever worked on making a boot floppy for OldWorlds AFAIK
+      &lt; (besides the installer boot floppy, which needs a root floppy).
+
+      Yes, it works.
+
+      I used ResEdit to patch the System on my floppy disk, just adding
+      root=/dev/hda7, and it works to boot my system.
+
+      I patched the System.bin in CVS using beav, to add /dev/hda8 (IIRC
+      that's what you are using now) and generated a new floppy image
+      with that mod made. I'll send it to you in a separate mail.
+
+      I assumed you were using a fairly recent version of boot-floppies,
+      (within the last couple of months), the powermac flavor.
+
+      I hope it flies for you!
+
+      -- 
+      *------v--------- Installing Debian GNU/Linux 3.0 --------v------*
+      | &lt;http://www.debian.org/releases/woody/installmanual&lt; |
+      | debian-imac (potato): &lt;http://debian-imac.sourceforge.net&lt; |
+      | Chris Tillman tillman@xxxxxxxxxxxxx |
+      | May the Source be with you |
+      *----------------------------------------------------------------*
+    </screen>
+  </section>
+</chapter>

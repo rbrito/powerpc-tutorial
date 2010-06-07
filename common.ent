@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- common entities file -->
+
+<!-- generic -->
+<!ENTITY fsf-addr "Free Software Foundation, Inc.,
+	51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA">
+<!ENTITY file-GPL "<filename>/usr/share/common-licenses/GPL</filename>">
+<!ENTITY url-gpl "http://www.gnu.org/copyleft/gpl.html">
+
+
+<!-- kuro specific -->
+<!ENTITY kuro "KuroBox">
+
+
+<!-- examples taken from Debian -->
+<!ENTITY debian-formal "Debian GNU/Linux">
+<!ENTITY email-debian-devel-changes "<email>debian-devel-changes@lists.debian.org</email>">
+<!ENTITY pgp-keyserv "<literal>subkeys.pgp.net</literal>">
+<!ENTITY sample-dist-dirtree "<screen>dists/stable/main/
+dists/stable/main/binary-i386/
+dists/stable/main/binary-m68k/
+dists/stable/main/binary-alpha/
+     ...</screen>">

@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY % commondata SYSTEM "common.ent" > %commondata;
+]>
+<chapter id="introduction">
+  <title>Introduction to GNU/Linux on PowerPC</title>
+
+  <para>
+    This short chapter contains a little of background information
+    regarding the PowerPC hardware on which Linux is able to run. The
+    kind of PowerPC hardware that Linux supports is huge: it ranges from
+    very low-powered processors up to very big and powerful
+    supercomputers (with many processors, and, not uncommon,
+    distributed), with all sorts of machines in the middle of this
+    spectrum.
+  </para>
+
+  <para>
+    Notable machines using the PowerPC architecture are the computers
+    made by Apple in various of its products (the PowerBooks, the
+    iBooks, some PowerMacs, some iMacs, some Mac Mini's, some of the
+    Xserver's, the Cube etc.), the Apple clones, made by a good amount
+    of manufacturers, the Sony PlayStation 3, and the Kuroboxes HD, HG
+    and some Linkstations.
+  </para>
+
+  <para>
+    It should be noted that the author is <emphasis>not</emphasis> an
+    expert on PowerPC and Linux. He merely happens to have accumulated
+    some knowledge by using some Linux distributions in the last decade
+    and in the last half decade or so with Linux on PowerPC.
+  </para>
+
+  <para>
+    There is little to no original content here and most of the concepts
+    here were elaborated and compiled from many sources, distilled by
+    the author's experience (sometimes, struggling to get things
+    working).
+  </para>
+
+  <para>
+    Please see the references for further information.
+  </para>
+
+  <section id="the-architecture">
+    <title>The PowerPC Architecture</title>
+
+    <para>
+      Differently from what the reader may be familiar with (most
+      probably, with the <literal>ia32</literal> or with the
+      <literal>x86-64</literal> architectures), the PowerPC (which
+      stands for "Power Performance Computing") architecture was
+      designed for expansion.
+    </para>
+
+    <para>
+      Also, differently from the <literal>ia32</literal> and
+      <literal>x86-64</literal> processors, the PowerPC processors
+      adopts a RISC-like Instruction Set Architecture (ISA), while the
+      former adopt a CISC-like ISA. This has significant impact on the
+      process of building compilers targeted at those classes of
+      processors.
+    </para>
+
+    <para>
+      The initial PowerPC computers had 32-bit processors (like the 601,
+      the 603/603e, the 750<footnote>a.k.a. G3</footnote>, and the
+      74xx<footnote>a.k.a. G4/G4+</footnote>), while some of the latest
+      processors run 64-bit software and have modern technologies
+      included. Most processors of the PowerPC family were developed by
+      IBM and Motorola.
+    </para>
+
+    <para>
+      One of the most well known sellers of systems with PowerPC
+      computers was Apple, Inc., which sold its Macintosh line of
+      computers with PowerPC processors (from 1994 to 2006), after
+      basing their computers around Motorola's <literal>68000</literal>
+      family of processors and before equipping their computers with
+      Intel processors.
+    </para>
+
+    <para>
+      Due to its relative low power consumption, some PowerPC processors
+      are used in embedded systems<footnote>Like the Kurobox HD, a small
+      embedded box, dedicated to use as a Network Attached Storage
+      (NAS), which employs a Freescale MPC8241 processor.</footnote> and
+      game consoles<footnote>Like Nintendo's Wii, Sony's PS3, and
+      Microsoft's Xbox 360.</footnote>. Others have vectorial
+      instruction units (which are, sometimes, called "multimedia units"
+      and are branded under names like "Altivec" or "Velocity Engine").
+    </para>
+
+  </section>
+
+  <section id="mac-generations">
+    <title>Different Apple Macintosh Generations</title>
+    
+    <para>
+      As older Apple's Macintoshes are the most potential platform where
+      one end-user will be installing Linux, we briefly discuss the kind
+      of machines that you may encounter and how their installation
+      methods differ.
+    </para>
+
+    <para>
+      All Apple Macs have a "BIOS" that is called Open Firmware. It is,
+      basically speaking, an interface to the hardware and, with it, the
+      user can store configuration options into the machine's
+      Non-Volatile RAM (nvram).
+    </para>
+
+    <para>
+      Among other things, the Open Firmware serves as a boot monitor
+      (something like a boot manager, in a distant analogy with LILO or
+      GRUB). It also keeps track of which hardware to use as input
+      device (e.g., the keyboard or a serial console), which piece of
+      hardware to use as an output console (e.g., the video card or,
+      again, a serial console), where the boot image is etc.
+      Unfortunately, Open Firmware doesn't understand<footnote>In the
+      sense that it can natively read files stored in such
+      filesystems.</footnote> standard Linux filesystems like
+      <code>ext2</code>, <code>ext3</code>, <code>XFS</code> or others,
+      being limited to only Apple's <code>HFS</code> (or, perhaps,
+      HFS+). This, as we will see, has some implications on how we
+      choose to boot the computers that we have at our disposal.
+    </para>
+
+    <para>
+      There are two kinds of Macintosh machines: the older ones, called
+      OldWorld machines, and the newer ones, called NewWorld.
+    </para>
+
+    <section id="oldworld-macs">
+      <title>The OldWorld Macs</title>
+    </section>
+
+    <section id="newworld-macs">
+      <title>The NewWorld Macs</title>
+    </section>
+  </section>
+
+  <section>
+    <title>Embedded Machines: The Kuroboxes HD/HG</title>
+    <para>
+      According to <ulink
+      url="http://kurobox.com/revolution/what.html">http://revogear.com</ulink>,
+
+      <blockquote>
+	<para>
+	  The &kuro; is a small-footprint Linux-based embedded platform
+	  for a personal server.
+	</para>
+
+	<para>
+	  The current incarnation of the &kuro;, the &kuro;, sports a
+	  266Mhz PowerPC processor, 128MB of RAM, 2 USB 2.0 Ports, and a
+	  10/100/1000Mbit network interface.
+	</para>
+      
+	<para>
+	  The &kuro; comes without a hard drive, but can hold any
+	  standard IDE (parallel ATA, not SATA) 3.5" drive. The &kuro;
+	  runs on a Linux kernel, and has multiple options for actual
+	  distribution. Actually, any Linux distribution that supports
+	  PPC will work, but so far the community has ported over
+	  Gentoo, Debian, Fedora and Sylver's Distro (which is the
+	  current incarnation of the Kuro's original embedded
+	  distribution).
+	</para>
+
+	<para>
+	  To give you a rough idea about the &kuro;/HG's power, it can
+	  transcode (decode and then re-encode to another bitrate) MP3's
+	  using LAME at about 25% faster than realtime. While not as
+	  fast as today's modern PC's, this is coming from a box that
+	  uses 17 Watts of juice. The tiny onboard fan (used to
+	  dissipate the hard drive's heat) is ultra-quiet at 22dB.
+	</para>
+
+	<para>
+	  The &kuro; is not for the faint of heart -- there is no
+	  graphical installer, no "click here to launch your web server"
+	  button. However, if you know a little about Linux, or are
+	  willing to learn, the &kuro; is an excellent platform for a
+	  small space server.
+	</para>
+      </blockquote>
+    </para>
+  </section>
+
+  <section id="foo-bar">
+    <title>Foo bar</title>
+    <para>
+      <literal>aeiou <replaceable>foo</replaceable></literal>
+    </para>
+
+    <itemizedlist>
+      <listitem>
+	<para>
+	  First item.
+	</para>
+      </listitem>
+
+      <listitem>
+	<para>
+	  Another item. An e-mail made with an entity:
+	  &email-debian-devel-changes;.
+	</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      An external url link: <ulink
+      url="http://rb.doesntexist.org/">Rogério Brito's homepage</ulink>.
+      An internal link: <xref linkend="oldworld-macs"/>
+    </para>
+  </section>
+
+</chapter>

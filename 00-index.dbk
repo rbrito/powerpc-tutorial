@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY % commondata SYSTEM "common.ent" > %commondata;
+  <!ENTITY % versiondata SYSTEM "version.ent"> %versiondata;
+]>
+<book lang="en">
+
+<title>Debian GNU/Linux on PowerPC Machines</title>
+<bookinfo>
+  <author>
+    <firstname>Rogério</firstname>
+    <surname>Brito</surname>
+  </author>
+
+  <releaseinfo>ver. &version;</releaseinfo>
+
+  <pubdate>&pubdate;</pubdate>
+
+  <copyright>
+    <year>2009</year>
+    <year>2010</year>
+    <holder>Rogério Brito</holder>
+  </copyright>
+
+  <legalnotice>
+    <para>
+      This small text is free software; you may redistribute it and/or
+      modify it under the terms of the GNU General Public License as
+      published by the Free Software Foundation; either version 2, or
+      (at your option) any later version.
+    </para>
+
+    <para>
+      This is distributed in the hope that it will be useful,
+      but <emphasis>without any warranty</emphasis>; without even the
+      implied warranty of merchantability or fitness for a particular
+      purpose.  See the GNU General Public License for more details.
+    </para>
+
+    <para>
+      A copy of the GNU General Public License is available as
+      &file-GPL; in the &debian-formal; distribution or on the World
+      Wide Web at <ulink url="&url-gpl;">the GNU web site</ulink>.  You
+      can also obtain it by writing to the &fsf-addr;.
+    </para>
+
+    <para>
+      If you want to print this reference, you should use
+      the <ulink url="debian-powerpc.pdf">pdf version</ulink>.
+    </para>
+  </legalnotice>
+</bookinfo>
+
+<xi:include href="10-intro.dbk"			xmlns:xi="http://www.w3.org/2003/XInclude"/>
+<xi:include href="20-installation.dbk"		xmlns:xi="http://www.w3.org/2003/XInclude"/>
+<xi:include href="30-customizations.dbk"	xmlns:xi="http://www.w3.org/2003/XInclude"/>
+<xi:include href="40-different-flavours.dbk"	xmlns:xi="http://www.w3.org/2003/XInclude"/>
+
+</book>
