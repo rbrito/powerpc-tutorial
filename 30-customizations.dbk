@@ -9,4 +9,388 @@
     This chapter contains information related to the installation of the
     software on the &kuro;.
   </para>
+
+  <section id="basics-using-grub2-with-powerpc">
+    <title>Basics using GRUB2 with PowerPC</title>
+    <para>
+      Here I write a little bit about my experiences running GRUB2 with a
+      PowerPC Mac (actually, an iBook G4), since the current
+      documentation is lacking in many places (outdated, incorrect,
+      etc.).
+    </para>
+    <para>
+      Some of what I say is platform agnostic, though, and may be of
+      interest to users of GRUB in general.
+    </para>
+    <para>
+      First of all, it is important to understand (at least superficially)
+      how botting on a Mac works.
+    </para>
+    <para>
+      One of the first programs that run in your Mac is the OpenFirmware.
+      It works with more or less the same purpose of a BIOS in a regular x86
+      system. The basic idea is the same: get the computer running with
+      whatever programs you want it to run. The implementation, though,
+      differs quite a bit.
+    </para>
+    <para>
+      First of all, OpenFirmware (OF) usually presents itself as a
+      command-line interface that is programmable, differently from the
+      common day BIOSes from x86 boxes. As it is programmable, it is more
+      flexible, but this flexibility comes at the price of an increased
+      complexity.
+    </para>
+    <para>
+      I may write some things more in a future article, if there is any
+      interest.
+    </para>
+    <para>
+      For now, it just suffices to say that to get to the OF prompt in a
+      Mac, you have to press a combination keys during the time that your
+      Mac gives a chime when you turn it on. At that moment, you have to
+      press (simulaneously) Cmd + Option + O + F. (Note: the Cmd key is the
+      key that has an Apple drawn on it, usually on the side of the space
+      bar).
+    </para>
+  </section>
+  <section id="limitations-of-open-firmware">
+    <title>Limitations of Open Firmware</title>
+    <para>
+      Differently from usual BIOSes of x86 computers, Open Firmware
+      <emphasis>can</emphasis> read the contents of a partition in your HD
+      (or other devices), as long as it is formatted in the original HFS
+      format (<emphasis>not</emphasis> in HFS+ or one of its descendents).
+    </para>
+    <para>
+      This is the reason why some older versions of Linux create an HFS
+      partition in your HD, even if you don't intent to run or use anything
+      besides Linux. The <literal>yaboot</literal> bootloader consists of,
+      among other things, one binary that is understandable by
+      OpenFirmware. That binary is a file called <literal>yaboot</literal>,
+      after the name of the booloader.
+    </para>
+    <para>
+      As an aside, you have to indicate to OF what is the file that you want
+      it to load during the boot process, so that it knows what to do. The
+      way to indicate this is to &quot;bless&quot; the file (and the folder
+      that contains it). Some ways to bless a file are to, for example, use
+      the <literal>bless</literal> command in MacOS X or the
+      <literal>hattrib -b</literal> command from hfsutils.
+    </para>
+    <para>
+      Files in an HFS filesystem have two attributes that many other
+      filesystems don't: a creator ID (the &quot;application&quot; that
+      created the file) and the type ID (which determines what kind of file
+      it is).
+    </para>
+    <para>
+      OpenFirmware, in particular, looks for files with the type
+      <literal>tbxi</literal> for the bootstrap process.
+    </para>
+    <para>
+      The <literal>yaboot</literal> binary is loaded by OF into memory and,
+      then, control is passed to the yaboot program, which then reads its
+      configuration file (<literal>yaboot.conf</literal>) from the same
+      folder where the binary was in. The file
+      <literal>yaboot.conf</literal> contains instructions for yaboot to do
+      its job. The file yaboot.conf is <emphasis>very</emphasis> similar in
+      construction to configurations of an older bootloader for x86
+      computers, <literal>lilo.conf</literal>.
+    </para>
+    <para>
+      Also, in a way similar to what LILO requires, after you install some
+      new kernel, change some parameter in the configuration file, etc., you
+      have to run a program that will set up everything so that the boot
+      process can know of your new configuration. With LILO, this command
+      was called <literal>lilo</literal>, while with yaboot the command is
+      called <literal>ybin</literal> (which, essentially, takes care of
+      putting <literal>yaboot.conf</literal> in the bootstrap/HFS partition
+      and blesses the <literal>yaboot</literal> binary).
+    </para>
+  </section>
+  <section id="going-to-grub2">
+    <title>Going to GRUB2</title>
+    <para>
+      One of the characteristics of yaboot (which is left as an exercise to
+      the reader to determine if it is a drawback or not) is exactly the way
+      that changes in the configuration have to be copied to the special HFS
+      partition: the step of running <literal>ybin</literal>.
+    </para>
+    <para>
+      GRUB2 (and its older sibling, GRUB legacy) do away with that: during
+      boot-time, it can understand the filesystems that you have in your
+      computer and interactively load whatever you want from there, also
+      from a command-line like OF, before any (regular) operating system has
+      even been started.
+    </para>
+    <para>
+      But how do you <emphasis>start</emphasis> GRUB2? Well, the way that
+      this is performed is copying a binary to that special HFS
+      partition. Here things start to be hairy, because GRUB2 has a lot of
+      functionality, but it comes at the price of it consuming a lot of
+      space (especially if you are using encrypted partitions or some kind
+      of logical volume managements with some journalling filesystem that
+      allows files to be compressed etc. on top of it). The list goes on.
+    </para>
+    <para>
+      Usually, that special HFS partition only has 800KB, which, BTW, is the
+      size of an old 3.5&quot; floppy used with older Macs (note: due to
+      some contraints on partitions and aligments of such partitions on
+      cylinders, it is not uncommon for disk partitioning software to create
+      partitions slighly larger than 800KB, but <emphasis>not</emphasis>
+      much larger than that).
+    </para>
+    <para>
+      A full-featured binary of GRUB2 to be placed on that HFS partition can
+      have much more than those 800KB. But how do you get that binary, in
+      the first place? And how do you fit that in the HFS partition?
+    </para>
+    <section id="creating-the-grub2-binary">
+      <title>Creating the GRUB2 binary</title>
+      <para>
+	To answer the first question, you have to construct it from your
+	<literal>grub-ieee1275</literal> package (I'm assuming here that you
+	are using Debian or Ubuntu, but similar instructions may apply to
+	other distributions). Then, a first step would be to create such
+	binary with:
+      </para>
+      <screen>
+mkdir /tmp/foo
+cd /tmp/foo
+cp -a /usr/lib/grub/powerpc-ieee1275/* .
+grub-mkimage -O powerpc-ieee1275 -o ../grub.img *.mod
+      </screen>
+      <para>
+	The last command of these create an executable named
+	<literal>grub.img</literal> that is callable from OF and which
+	contains every module from <literal>grub-ieee1275</literal>. This
+	executable that I call here <literal>grub.img</literal> is called,
+	in GRUB2 parlance, <emphasis>the core image</emphasis> and it it
+	seems to be named <literal>core.img</literal> in many systems.
+      </para>
+      <para>
+	On my system, with those commands, the binary
+	<literal>grub.img</literal> is about 1208KB, which is 50% larger
+	than that 800KB partition. And you would like it to be
+	<emphasis>much</emphasis> smaller, becase you want to still have
+	your <literal>yaboot</literal> bootloader by default while you are
+	evaluating your bootloaders (or using it as a backup plan).
+      </para>
+      <para>
+	As GRUB2 follow a modular design, you can mix and match the features
+	that you want. This already hints you to the way we can fit it in
+	the HFS partition, and it is always the same story: just trim the
+	fat.
+      </para>
+    </section>
+    <section id="creating-the-configuration-file">
+      <title>Creating the configuration file</title>
+      <para>
+	You will also have to have GRUB2 configuration's file (or you will
+	have to play with way more commands than you'd want to). An
+	important distinction here is that you usually have 2 or more
+	partitions on your Mac:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    the special bootstrap/HFS partition where OF is going to look at
+	    (I'll call it <literal>/dev/hda2</literal> here);
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    the partition where your <literal>/</literal> filesystem resides
+	    (denoted by <literal>/dev/hda3</literal> here);
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    some partition to hold <literal>/boot</literal> (I don't have
+	    one of these, but let's say that it is
+	    <literal>/dev/hda7</literal> for our discussion purposes),
+	    usually containing your kernels and initial ramdisks.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    other partitions.
+	  </para>
+	</listitem>
+      </itemizedlist>
+      <para>
+	With this in mind, you can With Let's say that this last one, in
+	Linux parlance, is <literal>/dev/hda3</literal> (as is the case of
+	this author), and optionally a partition where your Linux kernel
+	resides (people usually use it to store the <literal>/boot</literal>
+	subtree of a Linux filesystem). Let's say that this last one is
+	<literal>/dev/hda7</literal>.
+      </para>
+      <para>
+	Then, you would compose something like the following as a
+	configuration file for GRUB2 (named <literal>grub.cfg</literal>):
+      </para>
+      <screen>
+insmod part_apple
+insmod ext2
+set root='(hd,apple7)'
+
+menuentry &quot;Linux&quot; {
+    linux /vmlinux root=/dev/hda3
+    initrd /initrd
+}
+      </screen>
+      <para>
+	There are one two important points here that deserve more comments:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    Note that, <emphasis role="strong">differently</emphasis> from a
+	    regular x86 system, in a Mac system with only one HD the way
+	    that you specify an HD does <emphasis>not</emphasis> have a
+	    trailing zero. For instance, in the case above of the variable
+	    <literal>root</literal>, we have <literal>(hd,apple7)</literal>,
+	    while in a &quot;common PC&quot; we would have the
+	    <literal>(hd</literal> part replaced with
+	    <literal>(hd0</literal>.
+	  </para>
+	  <para>
+	    That's something that you should make your distribution aware
+	    of, if they aren't yet.
+	  </para>
+	  <para>
+	    As an addendum, I don't know how it works with systems with more
+	    than one HD, as I only have (PowerPC) Macs that are
+	    notebooks. If you can share any experiences, please do.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    One point of caution here: what GRUB2 calls
+	    <literal>root</literal> is not necessarily the root of your
+	    filesystem (i.e., the partition that holds
+	    <literal>/</literal>), but the <emphasis>device</emphasis> that
+	    everything that is &quot;not fully qualified&quot; is
+	    interpreted as being relative to.
+	  </para>
+	  <para>
+	    The &quot;not fully qualified&quot; above means anything that is
+	    not prefixed with <ulink
+	    url="http://www.gnu.org/software/grub/manual/grub.html#Device-syntax">GRUB's
+	    device notation</ulink>.  As an example,
+	    <literal>(hd,apple2)/boot/vmlinux</literal> if fully qualified
+	    for GRUB's purpose, while <literal>/boot/vmlinux</literal> is
+	    not.
+	  </para>
+	</listitem>
+      </itemizedlist>
+    </section>
+    <section id="putting-it-all-together">
+      <title>Putting it all together</title>
+      <para>
+	The next step is to just copy the files <literal>grub.img</literal>
+	and <literal>grub.cfg</literal> to the special HFS partition. You
+	can do that using <literal>hmount</literal>,
+	<literal>hcopy</literal>, and <literal>humount</literal> or you can
+	use the regular Linux <literal>hfs</literal> module to copy to that
+	partition.
+      </para>
+      <para>
+	Then, boot your system, get into the OF prompt and execute:
+      </para>
+      <screen>
+boot hd:2,grub.img
+      </screen>
+      <para>
+	Here, the <literal>2</literal> above is a reference to my HFS
+	partition. Substitute that with yours, appropriately. You will then
+	see the common (familiar?) GRUB prompt and, from there, everything
+	else that you know will (hopefully) work.
+      </para>
+    </section>
+  </section>
+  <section id="the-list-of-modules-that-works-for-metm">
+    <title>The list of modules that &quot;Works for Me(TM)&quot;</title>
+    <para>
+      As I mentioned above, I use a subset of all modules that come with
+      <literal>grub-ieee1275</literal> to create my
+      <literal>grub.img</literal> binary. Here is the list of modules that I
+      use and that gives me a reasonably sized bootloader:
+    </para>
+    <screen>
+bitmap.mod        datehook.mod  gzio.mod         lsmmap.mod      reboot.mod          terminal.mod
+bitmap_scale.mod  datetime.mod  halt.mod         memdisk.mod     regexp.mod          test.mod
+blocklist.mod     echo.mod      help.mod         memrw.mod       relocator.mod       trig.mod
+boot.mod          elf.mod       hexdump.mod      minicmd.mod     scsi.mod            true.mod
+bufio.mod         ext2.mod      hfs.mod          msdospart.mod   search.mod          video.mod
+cat.mod           fat.mod       hfsplus.mod      normal.mod      search_fs_file.mod  video_fb.mod
+cmp.mod           font.mod      ieee1275_fb.mod  part_apple.mod  search_fs_uuid.mod  videoinfo.mod
+configfile.mod    fshelp.mod    linux.mod        part_msdos.mod  search_label.mod
+cpio.mod          gettext.mod   loadenv.mod      parttool.mod    setjmp.mod
+crypto.mod        gfxmenu.mod   loopback.mod     probe.mod       sleep.mod
+date.mod          gfxterm.mod   ls.mod           read.mod        suspend.mod
+    </screen>
+    <para>
+      Just for the record, my <literal>grub.img</literal> file has 624KB,
+      and that can certainly be shrunk.
+    </para>
+  </section>
+  <section id="the-command-line-that-works-for-metm-to-create-the-image">
+    <title>The command line that &quot;Works for Me(TM)&quot; to create the
+    image</title>
+    <para>
+      Actually, I lied when I told you that I used the lines above to create
+      my <literal>grub.img</literal> file, because I'm lazy and I don't want
+      to type the <literal>.img</literal> extension. I also
+      <emphasis>embed</emphasis> my configuration file in the binary that I
+      create with GRUB2, so that I don't have two files to copy to my HFS
+      partition, but only one. I do that with:
+    </para>
+    <screen>
+grub-mkimage -c grub.cfg -o ../grub -O powerpc-ieee1275 -d . *.mod
+    </screen>
+    <para>
+      OK. No more lies here.
+    </para>
+    <para>
+      The nice aspect of GRUB is that one you install that image, you don't
+      have to touch that HFS partition anymore: you simply update your
+      regular filesystem's <literal>/boot/grub/grub.cfg</literal> file
+      (which is usually performed when you install a new kernel, at least
+      with Debian) and you're ready to go.
+    </para>
+    <para>
+      The good way to do that is to use a minimal configuration file
+      embedded in your <literal>grub</literal> binary in your HFS partition
+      that will hook into the system's
+      <literal>/boot/grub/grub.cfg</literal> to read newer kernels and leave
+      the HFS partition (and your system's NVRAM) alone.
+    </para>
+    <para>
+      Here is what I am using right now:
+    </para>
+    <screen>
+search --no-floppy --fs-uuid --set=root 35d26869-f7c9-4852-a9b8-100314560c34
+set prefix=($root)/boot/grub
+configfile /boot/grub/grub.cfg
+    </screen>
+    <para>
+      You will, of course, want to modify the file above as you install
+      newer kernels (perhaps even that unsupported operating system from
+      that fruity company, who knows?). Don't forget to change the UUID's,
+      and partition numbers to fit your needs.
+    </para>
+    <para>
+      Well, that's it. I hope that it helps somebody out there, as the
+      information that I got otherwise was way outdated, incomplete, etc.
+      to keep up with GRUB2 from these days. Now, let's go patch the tools
+      that we have so that not everybody who wants to use GRUB2 have to
+      learn about its workings.
+    </para>
+    <para>
+      Oh, of course, you can now have your kernels in ext4, btrfs, xfs
+      etc. partitions without the fear that your bootloader won't load them.
+    </para>
+  </section>
 </chapter>
